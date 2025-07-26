@@ -1,0 +1,288 @@
+import React, { useState } from 'react';
+import { Plus, Edit, Trash2, UserCheck, MapPin, Phone, Mail } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { DataTable } from '../components/ui/DataTable';
+import { useApp } from '../contexts/AppContext';
+import type { Employee } from '../types';
+
+export function Employees() {
+  const { employees } = useApp();
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const columns = [
+    {
+      key: 'avatar',
+      header: '',
+      width: '60px',
+      render: (employee: Employee) => (
+        <img
+          src={employee.avatar || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=40&h=40&fit=crop'}
+          alt={employee.name}
+          className="w-8 h-8 rounded-full"
+        />
+      )
+    },
+    {
+      key: 'name',
+      header: 'Nombre',
+      sortable: true,
+      render: (employee: Employee) => (
+        <div>
+          <p className="font-medium text-gray-900">{employee.name}</p>
+          <p className="text-sm text-gray-500">{employee.cedula}</p>
+        </div>
+      )
+    },
+    {
+      key: 'position',
+      header: 'Cargo',
+      sortable: true,
+      render: (employee: Employee) => (
+        <div>
+          <p className="text-sm font-medium text-gray-900">{employee.position}</p>
+          <p className="text-xs text-gray-500">{employee.department}</p>
+        </div>
+      )
+    },
+    {
+      key: 'salary',
+      header: 'Salario',
+      sortable: true,
+      render: (employee: Employee) => (
+        <span className="font-medium text-gray-900">${employee.salary.toLocaleString()}</span>
+      )
+    },
+    {
+      key: 'startDate',
+      header: 'Fecha Ingreso',
+      sortable: true,
+      render: (employee: Employee) => (
+        <span className="text-sm text-gray-600">
+          {employee.startDate.toLocaleDateString('es-EC')}
+        </span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Estado',
+      render: (employee: Employee) => (
+        <Badge
+          variant={employee.status === 'active' ? 'success' : 'default'}
+        >
+          {employee.status === 'active' ? 'Activo' : 'Inactivo'}
+        </Badge>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Acciones',
+      render: (employee: Employee) => (
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedEmployee(employee)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <Trash2 className="w-4 h-4 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Empleados</h1>
+          <p className="text-gray-600 mt-1">
+            Administra la información de tu equipo de trabajo
+          </p>
+        </div>
+        <Button className="flex items-center">
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Empleado
+        </Button>
+      </div>
+
+      {/* Quick stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Empleados</p>
+                <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
+              </div>
+              <UserCheck className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Empleados Activos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {employees.filter(e => e.status === 'active').length}
+                </p>
+              </div>
+              <UserCheck className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Salario Promedio</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ${Math.round(employees.reduce((sum, e) => sum + e.salary, 0) / employees.length).toLocaleString()}
+                </p>
+              </div>
+              <UserCheck className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Departamentos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {new Set(employees.map(e => e.department)).size}
+                </p>
+              </div>
+              <UserCheck className="w-8 h-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Employee list */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista de Empleados</CardTitle>
+            </CardHeader>
+            <CardContent padding="none">
+              <DataTable
+                data={employees}
+                columns={columns}
+                searchable={true}
+                filterable={true}
+                exportable={true}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Employee details */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {selectedEmployee ? 'Detalles del Empleado' : 'Selecciona un Empleado'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedEmployee ? (
+                <div className="space-y-6">
+                  {/* Photo and basic info */}
+                  <div className="text-center">
+                    <img
+                      src={selectedEmployee.avatar || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'}
+                      alt={selectedEmployee.name}
+                      className="w-20 h-20 rounded-full mx-auto mb-4"
+                    />
+                    <h3 className="text-xl font-bold text-gray-900">{selectedEmployee.name}</h3>
+                    <p className="text-gray-600">{selectedEmployee.position}</p>
+                    <Badge
+                      variant={selectedEmployee.status === 'active' ? 'success' : 'default'}
+                      className="mt-2"
+                    >
+                      {selectedEmployee.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+
+                  {/* Contact info */}
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm">
+                      <Mail className="w-4 h-4 text-gray-400 mr-3" />
+                      <span>{selectedEmployee.email}</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Phone className="w-4 h-4 text-gray-400 mr-3" />
+                      <span>{selectedEmployee.phone}</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <MapPin className="w-4 h-4 text-gray-400 mr-3" />
+                      <span>{selectedEmployee.address}</span>
+                    </div>
+                  </div>
+
+                  {/* Employment details */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Información Laboral</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Departamento:</span>
+                        <span className="font-medium">{selectedEmployee.department}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Salario:</span>
+                        <span className="font-medium">${selectedEmployee.salary.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Fecha de Ingreso:</span>
+                        <span className="font-medium">
+                          {selectedEmployee.startDate.toLocaleDateString('es-EC')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Antigüedad:</span>
+                        <span className="font-medium">
+                          {Math.round((Date.now() - selectedEmployee.startDate.getTime()) / (1000 * 60 * 60 * 24 * 30))} meses
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="border-t pt-4 space-y-3">
+                    <Button variant="outline" className="w-full">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar Información
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Ver Historial Salarial
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Gestionar Ausencias
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <UserCheck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Haz clic en un empleado para ver sus detalles</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
