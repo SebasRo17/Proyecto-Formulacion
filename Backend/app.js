@@ -8,9 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rutas (las agregaremos más adelante)
-// ... (lo que ya tienes arriba)
 app.use('/api/employees', require('./routes/employee.routes'));
+app.use('/api/auth', require('./routes/auth.routes'));
 
 
 app.get('/', (req, res) => {
