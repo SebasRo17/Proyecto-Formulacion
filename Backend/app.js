@@ -13,6 +13,7 @@ app.use('/api/employees', require('./routes/employee.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/payrolls', require('./routes/payroll.routes'));
 app.use('/api/dashboard', require('./routes/dashboard.routes'));
+app.use('/api/ai-insights', require('./routes/aiinsight.routes'));
 
 
 app.get('/', (req, res) => {
