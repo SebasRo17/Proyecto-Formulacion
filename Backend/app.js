@@ -12,6 +12,7 @@ app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use('/api/employees', require('./routes/employee.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/payrolls', require('./routes/payroll.routes'));
+app.use('/api/dashboard', require('./routes/dashboard.routes'));
 
 
 app.get('/', (req, res) => {
