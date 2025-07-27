@@ -5,11 +5,13 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { DataTable } from '../components/ui/DataTable';
-import { useApp } from '../contexts/AppContext';
+import { useEmployees } from '../hooks/useEmployees';
+import { useAuth } from '../contexts/AuthContext';
 import type { Employee } from '../types';
 
 export function Employees() {
-  const { employees } = useApp();
+  const { employees, loading, error, setEmployees } = useEmployees();
+  const { token } = useAuth();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
@@ -22,10 +24,30 @@ export function Employees() {
     phone: '',
     address: ''
   });
+  const [adding, setAdding] = useState(false);
 
-  const handleAddEmployee = () => {
-    // Mock functionality - in real app would call API
-    console.log('Adding employee:', newEmployee);
+  // Agregar empleado - POST al backend
+  const handleAddEmployee = async () => {
+  setAdding(true);
+  try {
+    const res = await fetch('http://localhost:5000/api/employees', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        ...newEmployee,
+        salary: Number(newEmployee.salary),
+        startDate: new Date(),
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('Error al crear empleado:', data);
+      throw new Error('Error al crear empleado');
+    }
+    setEmployees(prev => [...prev, data]);
     setShowAddModal(false);
     setNewEmployee({
       name: '',
@@ -37,6 +59,32 @@ export function Employees() {
       phone: '',
       address: ''
     });
+  } catch (err) {
+    alert('No se pudo crear el empleado');
+    console.error(err);
+  }
+  setAdding(false);
+};
+
+
+  // Eliminar empleado - DELETE al backend
+  const handleDeleteEmployee = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de eliminar este empleado?')) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/employees/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      if (!res.ok) throw new Error('Error al eliminar empleado');
+      setEmployees(prev => prev.filter(emp => emp._id !== id && emp.id !== id));
+      if (selectedEmployee && (selectedEmployee._id === id || selectedEmployee.id === id)) {
+        setSelectedEmployee(null);
+      }
+    } catch {
+      alert('No se pudo eliminar el empleado');
+    }
   };
 
   const columns = [
@@ -79,7 +127,7 @@ export function Employees() {
       header: 'Salario',
       sortable: true,
       render: (employee: Employee) => (
-        <span className="font-medium text-gray-900">${employee.salary.toLocaleString()}</span>
+        <span className="font-medium text-gray-900">${employee.salary?.toLocaleString()}</span>
       )
     },
     {
@@ -88,7 +136,7 @@ export function Employees() {
       sortable: true,
       render: (employee: Employee) => (
         <span className="text-sm text-gray-600">
-          {employee.startDate.toLocaleDateString('es-EC')}
+          {employee.startDate ? new Date(employee.startDate).toLocaleDateString('es-EC') : ''}
         </span>
       )
     },
@@ -115,13 +163,20 @@ export function Employees() {
           >
             <Edit className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteEmployee(employee._id || employee.id)}
+          >
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
         </div>
       )
     }
   ];
+
+  if (loading) return <div>Cargando empleados...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -133,10 +188,6 @@ export function Employees() {
             Administra la información de tu equipo de trabajo
           </p>
         </div>
-        <Button className="flex items-center">
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar Empleado
-        </Button>
         <Button 
           className="flex items-center"
           onClick={() => setShowAddModal(true)}
@@ -282,13 +333,16 @@ export function Employees() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Fecha de Ingreso:</span>
                         <span className="font-medium">
-                          {selectedEmployee.startDate.toLocaleDateString('es-EC')}
+                          {selectedEmployee.startDate
+                            ? new Date(selectedEmployee.startDate).toLocaleDateString('es-EC')
+                            : ''}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Antigüedad:</span>
                         <span className="font-medium">
-                          {Math.round((Date.now() - selectedEmployee.startDate.getTime()) / (1000 * 60 * 60 * 24 * 30))} meses
+                        `  {selectedEmployee.startDate
+                            ? Math.round((Date.now() - new Date(selectedEmployee.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30))
+                            : 0} meses
                         </span>
                       </div>
                     </div>
