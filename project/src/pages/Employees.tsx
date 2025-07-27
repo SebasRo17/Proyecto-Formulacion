@@ -28,39 +28,44 @@ export function Employees() {
 
   // Agregar empleado - POST al backend
   const handleAddEmployee = async () => {
-    setAdding(true);
-    try {
-      const res = await fetch('http://localhost:5000/api/employees', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...newEmployee,
-          salary: Number(newEmployee.salary), // asegúrate de enviar número
-          startDate: new Date(selectedEmployee.startDate).toLocaleDateString('es-EC') // O deja que el backend lo gestione si es automático
-        })
-      });
-      if (!res.ok) throw new Error('Error al crear empleado');
-      const created = await res.json();
-      setEmployees(prev => [...prev, created]);
-      setShowAddModal(false);
-      setNewEmployee({
-        name: '',
-        email: '',
-        position: '',
-        department: '',
-        salary: '',
-        cedula: '',
-        phone: '',
-        address: ''
-      });
-    } catch {
-      alert('No se pudo crear el empleado');
+  setAdding(true);
+  try {
+    const res = await fetch('http://localhost:5000/api/employees', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        ...newEmployee,
+        salary: Number(newEmployee.salary),
+        startDate: new Date(),
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('Error al crear empleado:', data);
+      throw new Error('Error al crear empleado');
     }
-    setAdding(false);
-  };
+    setEmployees(prev => [...prev, data]);
+    setShowAddModal(false);
+    setNewEmployee({
+      name: '',
+      email: '',
+      position: '',
+      department: '',
+      salary: '',
+      cedula: '',
+      phone: '',
+      address: ''
+    });
+  } catch (err) {
+    alert('No se pudo crear el empleado');
+    console.error(err);
+  }
+  setAdding(false);
+};
+
 
   // Eliminar empleado - DELETE al backend
   const handleDeleteEmployee = async (id: string) => {
