@@ -1,4 +1,5 @@
 const Employee = require('../models/employee.model');
+const Payroll = require('../models/payroll.model');
 
 exports.getStats = async (req, res) => {
   try {
@@ -19,6 +20,39 @@ exports.getStats = async (req, res) => {
       totalSalaries,
       departmentCosts
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+exports.getPayrollTrends = async (req, res) => {
+  try {
+    const payrolls = await Payroll.find().sort({ period: 1 });
+
+    const monthlyTrends = payrolls.map(p => ({
+      name: p.period,
+      value: p.totalGross 
+    }));
+
+    // Calcula costos por departamento (última nómina)
+    let departmentCosts = [];
+    if (payrolls.length > 0) {
+      // Toma la nómina más reciente
+      const latest = payrolls[payrolls.length - 1];
+      const employeeCosts = {};
+
+      latest.employees.forEach(e => {
+        const dept = e.employee.department || 'Otro';
+        if (!employeeCosts[dept]) employeeCosts[dept] = 0;
+        employeeCosts[dept] += e.grossAmount;
+      });
+
+      departmentCosts = Object.entries(employeeCosts).map(([name, value]) => ({
+        name,
+        value
+      }));
+    }
+
+    res.json({ monthlyTrends, departmentCosts });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
