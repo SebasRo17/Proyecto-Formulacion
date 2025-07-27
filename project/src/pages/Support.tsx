@@ -75,33 +75,6 @@ const faqCategories = [
   }
 ];
 
-const resources = [
-  {
-    title: 'Manual de Usuario',
-    description: 'Guía completa para usar todas las funciones de PaySmart AI',
-    type: 'PDF',
-    url: '#'
-  },
-  {
-    title: 'Videos Tutoriales',
-    description: 'Aprende paso a paso con nuestros videos explicativos',
-    type: 'Video',
-    url: '#'
-  },
-  {
-    title: 'Webinar: Nuevas Funciones',
-    description: 'Conoce las últimas actualizaciones y mejoras',
-    type: 'Webinar',
-    url: '#'
-  },
-  {
-    title: 'API Documentation',
-    description: 'Documentación técnica para integraciones',
-    type: 'Docs',
-    url: '#'
-  }
-];
-
 export function Support() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string>('getting-started');
@@ -248,30 +221,6 @@ export function Support() {
 
         {/* Resources and Contact */}
         <div className="space-y-6">
-          {/* Resources */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Book className="w-5 h-5 mr-2 text-green-600" />
-                Recursos Útiles
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {resources.map((resource, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 text-sm">{resource.title}</h4>
-                    <p className="text-xs text-gray-500">{resource.description}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="default" size="sm">{resource.type}</Badge>
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
           {/* Contact form */}
           <Card>
             <CardHeader>
@@ -306,38 +255,6 @@ export function Support() {
               <Button className="w-full">
                 Enviar Consulta
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* System status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Estado del Sistema</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Plataforma</span>
-                  <Badge variant="success" size="sm">Operativo</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">IA Insights</span>
-                  <Badge variant="success" size="sm">Operativo</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Reportes</span>
-                  <Badge variant="success" size="sm">Operativo</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Integraciones</span>
-                  <Badge variant="success" size="sm">Operativo</Badge>
-                </div>
-              </div>
-              <div className="mt-4 text-center">
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
-                  Ver página de estado completa →
-                </a>
-              </div>
             </CardContent>
           </Card>
         </div>

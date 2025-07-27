@@ -37,8 +37,6 @@ export function Dashboard() {
     { name: 'RRHH', value: 8000 }
   ];
 
-  const highSeverityInsights = aiInsights.filter(insight => insight.severity === 'high');
-
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -56,26 +54,6 @@ export function Dashboard() {
           </Badge>
         </div>
       </div>
-
-      {/* AI Alerts */}
-      {highSeverityInsights.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-start">
-              <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
-              <div>
-                <h3 className="font-medium text-red-900 mb-1">Alertas de IA Críticas</h3>
-                <p className="text-sm text-red-800 mb-2">
-                  Se han detectado {highSeverityInsights.length} situación(es) que requieren atención inmediata.
-                </p>
-                <button className="text-sm text-red-700 font-medium hover:text-red-900">
-                  Ver detalles en IA Insights →
-                </button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Key metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

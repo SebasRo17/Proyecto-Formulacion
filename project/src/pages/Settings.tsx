@@ -20,10 +20,6 @@ import { useAuth } from '../contexts/AuthContext';
 const settingsSections = [
   { id: 'company', label: 'Empresa', icon: Building2 },
   { id: 'users', label: 'Usuarios', icon: Users },
-  { id: 'security', label: 'Seguridad', icon: Shield },
-  { id: 'notifications', label: 'Notificaciones', icon: Bell },
-  { id: 'integrations', label: 'Integraciones', icon: Database },
-  { id: 'audit', label: 'Auditoría', icon: History }
 ];
 
 export function Settings() {
@@ -116,8 +112,7 @@ export function Settings() {
       <div className="space-y-4">
         {[
           { name: 'Ana García', email: 'admin@empresa.com', role: 'admin', status: 'active' },
-          { name: 'Carlos López', email: 'rrhh@empresa.com', role: 'rrhh', status: 'active' },
-          { name: 'María Rodríguez', email: 'contador@empresa.com', role: 'contador', status: 'active' }
+          { name: 'Carlos López', email: 'rrhh@empresa.com', role: 'rrhh', status: 'active' }
         ].map((userItem, index) => (
           <Card key={index}>
             <CardContent className="p-4">
@@ -135,8 +130,7 @@ export function Settings() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Badge variant="success" size="sm">
-                    {userItem.role === 'admin' ? 'Administrador' :
-                     userItem.role === 'rrhh' ? 'RRHH' : 'Contador'}
+                    {userItem.role === 'admin' ? 'Administrador' : 'RRHH'}
                   </Badge>
                   <Button variant="outline" size="sm">
                     Editar
@@ -150,136 +144,10 @@ export function Settings() {
     </div>
   );
 
-  const renderSecuritySettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Configuración de Seguridad</h3>
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">Autenticación de Dos Factores</h4>
-                  <p className="text-sm text-gray-500">Añade una capa extra de seguridad</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Configurar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">Política de Contraseñas</h4>
-                  <p className="text-sm text-gray-500">Configura requisitos de contraseña</p>
-                </div>
-                <Badge variant="success">Activa</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">Sesiones Activas</h4>
-                  <p className="text-sm text-gray-500">Revisa y cierra sesiones</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Ver Sesiones
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderIntegrationsSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Integraciones Disponibles</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[
-            { name: 'SAP', description: 'Sistema de gestión empresarial', status: 'available', logo: 'https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop' },
-            { name: 'Odoo', description: 'Suite de aplicaciones empresariales', status: 'connected', logo: 'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop' },
-            { name: 'Workday', description: 'Gestión de recursos humanos', status: 'available', logo: 'https://images.pexels.com/photos/1181624/pexels-photo-1181624.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop' },
-            { name: 'Slack', description: 'Comunicación empresarial', status: 'connected', logo: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop' }
-          ].map((integration, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <img
-                    src={integration.logo}
-                    alt={integration.name}
-                    className="w-12 h-12 rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{integration.name}</h4>
-                    <p className="text-sm text-gray-500">{integration.description}</p>
-                  </div>
-                  <div className="text-right">
-                    {integration.status === 'connected' ? (
-                      <Badge variant="success" size="sm">Conectado</Badge>
-                    ) : (
-                      <Button variant="outline" size="sm">Conectar</Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderAuditSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Registro de Auditoría</h3>
-        <div className="space-y-3">
-          {[
-            { action: 'Nómina procesada', user: 'Ana García', timestamp: '2024-01-15 10:30:00', type: 'success' },
-            { action: 'Usuario agregado', user: 'Ana García', timestamp: '2024-01-14 15:45:00', type: 'info' },
-            { action: 'Configuración modificada', user: 'Carlos López', timestamp: '2024-01-14 09:20:00', type: 'warning' },
-            { action: 'Intento de acceso fallido', user: 'Sistema', timestamp: '2024-01-13 22:15:00', type: 'error' }
-          ].map((log, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      log.type === 'success' ? 'bg-green-500' :
-                      log.type === 'warning' ? 'bg-yellow-500' :
-                      log.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-                    }`} />
-                    <div>
-                      <p className="font-medium text-gray-900">{log.action}</p>
-                      <p className="text-sm text-gray-500">por {log.user}</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-500">{log.timestamp}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderContent = () => {
     switch (activeSection) {
       case 'company': return renderCompanySettings();
       case 'users': return renderUsersSettings();
-      case 'security': return renderSecuritySettings();
-      case 'integrations': return renderIntegrationsSettings();
-      case 'audit': return renderAuditSettings();
       default: return renderCompanySettings();
     }
   };

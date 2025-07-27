@@ -117,10 +117,6 @@ export function Reports() {
             Genera y gestiona reportes para entidades gubernamentales
           </p>
         </div>
-        <Button>
-          <Send className="w-4 h-4 mr-2" />
-          Envío Automático
-        </Button>
       </div>
 
       {/* Quick stats */}

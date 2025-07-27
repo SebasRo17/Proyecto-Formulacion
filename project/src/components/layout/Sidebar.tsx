@@ -20,20 +20,15 @@ const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'rrhh', 'contador'] },
   { id: 'employees', icon: Users, label: 'Empleados', roles: ['admin', 'rrhh'] },
   { id: 'payroll', icon: Calculator, label: 'Nómina', roles: ['admin', 'rrhh', 'contador'] },
-  { id: 'bonuses', icon: Gift, label: 'Bonificaciones', roles: ['admin', 'rrhh'] },
   { id: 'ai-insights', icon: Brain, label: 'IA Insights', roles: ['admin', 'rrhh'] },
   { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'contador'] },
-  { id: 'plans-billing', icon: CreditCard, label: 'Facturación', roles: ['admin'] },
   { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin'] },
-  { id: 'notifications', icon: Bell, label: 'Notificaciones', roles: ['admin', 'rrhh', 'contador'] },
   { id: 'support', icon: HelpCircle, label: 'Soporte', roles: ['admin', 'rrhh', 'contador'] }
 ];
 
 export function Sidebar() {
   const { user } = useAuth();
-  const { currentPage, setCurrentPage, notifications } = useApp();
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const { currentPage, setCurrentPage } = useApp();
 
   const filteredMenuItems = menuItems.filter(item => 
     user?.role && item.roles.includes(user.role)
@@ -55,7 +50,6 @@ export function Sidebar() {
         {filteredMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
-          const showNotificationBadge = item.id === 'notifications' && unreadCount > 0;
 
           return (
             <button
@@ -71,11 +65,6 @@ export function Sidebar() {
             >
               <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
               <span className="flex-1 text-left">{item.label}</span>
-              {showNotificationBadge && (
-                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] h-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
               {isActive && <ChevronRight className="w-4 h-4 text-blue-600" />}
             </button>
           );

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, UserCheck, MapPin, Phone, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, UserCheck, MapPin, Phone, Mail, X, Save } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Input } from '../components/ui/Input';
 import { DataTable } from '../components/ui/DataTable';
 import { useApp } from '../contexts/AppContext';
 import type { Employee } from '../types';
@@ -10,6 +11,33 @@ import type { Employee } from '../types';
 export function Employees() {
   const { employees } = useApp();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEmployee, setNewEmployee] = useState({
+    name: '',
+    email: '',
+    position: '',
+    department: '',
+    salary: '',
+    cedula: '',
+    phone: '',
+    address: ''
+  });
+
+  const handleAddEmployee = () => {
+    // Mock functionality - in real app would call API
+    console.log('Adding employee:', newEmployee);
+    setShowAddModal(false);
+    setNewEmployee({
+      name: '',
+      email: '',
+      position: '',
+      department: '',
+      salary: '',
+      cedula: '',
+      phone: '',
+      address: ''
+    });
+  };
 
   const columns = [
     {
@@ -106,6 +134,13 @@ export function Employees() {
           </p>
         </div>
         <Button className="flex items-center">
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Empleado
+        </Button>
+        <Button 
+          className="flex items-center"
+          onClick={() => setShowAddModal(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Empleado
         </Button>
@@ -283,6 +318,112 @@ export function Employees() {
           </Card>
         </div>
       </div>
+
+      {/* Add Employee Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Agregar Nuevo Empleado</h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowAddModal(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Nombre Completo"
+                  value={newEmployee.name}
+                  onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
+                  placeholder="Juan Pérez"
+                  required
+                />
+                <Input
+                  label="Cédula"
+                  value={newEmployee.cedula}
+                  onChange={(e) => setNewEmployee({...newEmployee, cedula: e.target.value})}
+                  placeholder="1750123456"
+                  required
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  value={newEmployee.email}
+                  onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
+                  placeholder="juan.perez@empresa.com"
+                  required
+                />
+                <Input
+                  label="Teléfono"
+                  value={newEmployee.phone}
+                  onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
+                  placeholder="0998765432"
+                  required
+                />
+                <Input
+                  label="Cargo"
+                  value={newEmployee.position}
+                  onChange={(e) => setNewEmployee({...newEmployee, position: e.target.value})}
+                  placeholder="Desarrollador Senior"
+                  required
+                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Departamento
+                  </label>
+                  <select
+                    value={newEmployee.department}
+                    onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleccionar departamento</option>
+                    <option value="Tecnología">Tecnología</option>
+                    <option value="Ventas">Ventas</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="RRHH">RRHH</option>
+                    <option value="Administración">Administración</option>
+                  </select>
+                </div>
+                <Input
+                  label="Salario"
+                  type="number"
+                  value={newEmployee.salary}
+                  onChange={(e) => setNewEmployee({...newEmployee, salary: e.target.value})}
+                  placeholder="2500"
+                  required
+                />
+              </div>
+              
+              <Input
+                label="Dirección"
+                value={newEmployee.address}
+                onChange={(e) => setNewEmployee({...newEmployee, address: e.target.value})}
+                placeholder="Av. Amazonas N21-21, Quito"
+                required
+              />
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3 p-6 border-t bg-gray-50">
+              <Button 
+                variant="outline"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleAddEmployee}>
+                <Save className="w-4 h-4 mr-2" />
+                Guardar Empleado
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

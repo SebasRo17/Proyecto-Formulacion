@@ -25,8 +25,6 @@ const PlaceholderPage = ({ title, description }: { title: string; description: s
 
 const Signup = () => <PlaceholderPage title="Registro de Empresa" description="Crea tu cuenta empresarial en PaySmart AI" />;
 const Onboarding = () => <PlaceholderPage title="Configuración Inicial" description="Wizard de configuración paso a paso" />;
-const Bonuses = () => <PlaceholderPage title="Gestión de Bonificaciones" description="Configura bonos e incentivos para tus empleados" />;
-const PlansBilling = () => <PlaceholderPage title="Planes y Facturación" description="Gestiona tu suscripción y facturación SaaS" />;
 
 export function Router() {
   const { user, isLoading } = useAuth();
@@ -52,12 +50,9 @@ export function Router() {
       case 'dashboard': return <Dashboard />;
       case 'employees': return <Employees />;
       case 'payroll': return <Payroll />;
-      case 'bonuses': return <Bonuses />;
       case 'ai-insights': return <AIInsights />;
       case 'reports': return <Reports />;
-      case 'plans-billing': return <PlansBilling />;
       case 'settings': return <Settings />;
-      case 'notifications': return <Notifications />;
       case 'support': return <Support />;
       case 'signup': return <Signup />;
       case 'onboarding': return <Onboarding />;
