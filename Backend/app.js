@@ -7,6 +7,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 
 app.use('/api/employees', require('./routes/employee.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));

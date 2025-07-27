@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -10,72 +11,58 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Ana García',
-    email: 'admin@empresa.com',
-    role: 'admin',
-    company: 'TechCorp Ecuador',
-    avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '2',
-    name: 'Carlos López',
-    email: 'rrhh@empresa.com',
-    role: 'rrhh',
-    company: 'TechCorp Ecuador',
-    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '3',
-    name: 'María Rodríguez',
-    email: 'contador@empresa.com',
-    role: 'contador',
-    company: 'TechCorp Ecuador',
-    avatar: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  }
-];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Cargar usuario/token de localStorage al iniciar
   useEffect(() => {
-    // Check for stored session
     const storedUser = localStorage.getItem('paysmart_user');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('paysmart_token');
+    if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
+      setToken(storedToken);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  // Login real
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = mockUsers.find(u => u.email === email);
-    if (foundUser && password === 'password') {
-      setUser(foundUser);
-      localStorage.setItem('paysmart_user', JSON.stringify(foundUser));
-      setIsLoading(false);
-      return true;
-    }
-    
-    setIsLoading(false);
-    return false;
-  };
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-  const logout = () => {
+      const data = await res.json();
+      if (res.ok && data.token && data.user) {
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem('paysmart_user', JSON.stringify(data.user));
+        localStorage.setItem('paysmart_token', data.token);
+        setIsLoading(false);
+        return true;
+      }
+      setIsLoading(false);
+      return false;
+    } catch {
+      setIsLoading(false);
+      return false;
+    }
+  }, []);
+
+  // Logout
+  const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('paysmart_user');
-  };
+    localStorage.removeItem('paysmart_token');
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

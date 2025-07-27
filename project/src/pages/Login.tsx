@@ -18,8 +18,8 @@ export function Login() {
     
     const success = await login(email, password);
     if (!success) {
-      setError('Credenciales inválidas. Intenta con: admin@empresa.com / password');
-    }
+  setError('Credenciales inválidas. Verifica tu correo y contraseña.');
+  }
   };
 
   return (
