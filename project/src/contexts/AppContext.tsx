@@ -1,15 +1,23 @@
-import React, { createContext, useContext, useState } from 'react';
-import type { Employee, PayrollItem, AIInsight, Notification, Report } from '../types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { Employee, PayrollItem, PayrollRecord, AIInsight, Notification, Report } from '../types';
+import { api } from '../services/api';
 
 interface AppContextType {
   employees: Employee[];
   payrollItems: PayrollItem[];
+  payrollRecords: PayrollRecord[];
   aiInsights: AIInsight[];
+  setAiInsights: (insights: AIInsight[]) => void;
   notifications: Notification[];
   reports: Report[];
   currentPage: string;
   setCurrentPage: (page: string) => void;
   markNotificationAsRead: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  refreshData: () => void;
+  createSampleData: () => Promise<void>;
+  createSamplePayrolls: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -122,12 +130,119 @@ const mockNotifications: Notification[] = [
 ];
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [employees] = useState<Employee[]>(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
   const [payrollItems] = useState<PayrollItem[]>([]);
-  const [aiInsights] = useState<AIInsight[]>(mockAIInsights);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [reports] = useState<Report[]>([]);
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Function to fetch AI insights from backend
+  const fetchAIInsights = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getAIInsights();
+      
+      // Transform backend data to match frontend interface
+      const transformedData = data.map((insight: any) => ({
+        id: insight._id,
+        type: insight.type,
+        title: insight.title,
+        description: insight.description,
+        severity: insight.severity,
+        confidence: insight.confidence,
+        recommendations: insight.recommendations || [],
+        affectedEmployees: insight.affectedEmployees?.map((emp: any) => emp._id || emp) || [],
+        createdAt: new Date(insight.createdAt)
+      }));
+      
+      setAiInsights(transformedData);
+    } catch (err) {
+      console.error('Error fetching AI insights:', err);
+      setError('Error al cargar los insights de IA');
+      // Fallback to mock data on error
+      setAiInsights(mockAIInsights);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to fetch payroll records from backend
+  const fetchPayrollRecords = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getPayrolls();
+      
+      // Transform backend data to match frontend interface
+      const transformedData = data.map((payroll: any) => ({
+        id: payroll._id,
+        period: payroll.period,
+        employees: payroll.employees?.length || 0,
+        grossAmount: payroll.totalGross || 0,
+        deductions: payroll.totalDeductions || 0,
+        netAmount: payroll.totalNet || 0,
+        status: payroll.status || 'draft',
+        createdAt: new Date(payroll.createdAt)
+      }));
+      
+      setPayrollRecords(transformedData);
+    } catch (err) {
+      console.error('Error fetching payroll records:', err);
+      setError('Error al cargar las nóminas');
+      // Keep empty array on error
+      setPayrollRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to refresh all data
+  const refreshData = async () => {
+    await Promise.all([fetchAIInsights(), fetchPayrollRecords()]);
+  };
+
+  // Function to create sample AI insights data
+  const createSampleData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await api.createSampleInsights();
+      // Refresh data after creating sample data
+      await fetchAIInsights();
+    } catch (err) {
+      console.error('Error creating sample data:', err);
+      setError('Error al crear datos de prueba');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to create sample payroll data
+  const createSamplePayrolls = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await api.createSamplePayrolls();
+      // Refresh data after creating sample data
+      await fetchPayrollRecords();
+    } catch (err) {
+      console.error('Error creating sample payrolls:', err);
+      setError('Error al crear nóminas de prueba');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchAIInsights();
+    fetchPayrollRecords();
+  }, []);
 
   const markNotificationAsRead = (id: string) => {
     setNotifications(prev => 
@@ -143,12 +258,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider value={{
       employees,
       payrollItems,
+      payrollRecords,
       aiInsights,
+      setAiInsights,
       notifications,
       reports,
       currentPage,
       setCurrentPage,
-      markNotificationAsRead
+      markNotificationAsRead,
+      loading,
+      error,
+      refreshData,
+      createSampleData,
+      createSamplePayrolls
     }}>
       {children}
     </AppContext.Provider>
