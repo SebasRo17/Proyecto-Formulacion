@@ -1,47 +1,14 @@
 import React, { useState } from 'react';
-import { Plus, Calculator, Download, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Calculator, Download, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { DataTable } from '../components/ui/DataTable';
 import { useApp } from '../contexts/AppContext';
-
-interface PayrollRecord {
-  id: string;
-  period: string;
-  employees: number;
-  grossAmount: number;
-  deductions: number;
-  netAmount: number;
-  status: 'draft' | 'processing' | 'approved' | 'paid';
-  createdAt: Date;
-}
-
-const mockPayrollRecords: PayrollRecord[] = [
-  {
-    id: '1',
-    period: 'Enero 2024',
-    employees: 15,
-    grossAmount: 52500,
-    deductions: 8750,
-    netAmount: 43750,
-    status: 'paid',
-    createdAt: new Date('2024-01-31')
-  },
-  {
-    id: '2',
-    period: 'Febrero 2024',
-    employees: 15,
-    grossAmount: 53200,
-    deductions: 8850,
-    netAmount: 44350,
-    status: 'processing',
-    createdAt: new Date('2024-02-15')
-  }
-];
+import type { PayrollRecord } from '../types';
 
 export function Payroll() {
-  const { employees } = useApp();
+  const { employees, payrollRecords, loading, error, refreshData, createSamplePayrolls } = useApp();
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollRecord | null>(null);
 
   const getStatusColor = (status: string) => {
@@ -164,6 +131,13 @@ export function Payroll() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <Button variant="outline" onClick={refreshData} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Actualizando...' : 'Actualizar'}
+          </Button>
+          <Button variant="outline" onClick={createSamplePayrolls} disabled={loading}>
+            Crear Datos de Prueba
+          </Button>
           <Button variant="outline">
             <Calculator className="w-4 h-4 mr-2" />
             Calcular Décimos
@@ -175,78 +149,115 @@ export function Payroll() {
         </div>
       </div>
 
+      {/* Error message */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+              <span className="text-red-800">{error}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshData}
+                className="ml-auto"
+              >
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading state */}
+      {loading && payrollRecords.length === 0 && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Cargando nóminas...</p>
+          </div>
+        </div>
+      )}
+
       {/* Quick stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Empleados en Nómina</p>
-                <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
-              </div>
-              <Calculator className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Nómina Mensual</p>
-                <p className="text-2xl font-bold text-gray-900">$53,200</p>
-                <p className="text-sm text-green-600 mt-1">+1.3% vs mes anterior</p>
-              </div>
-              <Calculator className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Próximo Pago</p>
-                <p className="text-2xl font-bold text-gray-900">15</p>
-                <p className="text-sm text-yellow-600 mt-1">días restantes</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Estado Actual</p>
-                <p className="text-lg font-bold text-yellow-600">Procesando</p>
-                <p className="text-sm text-gray-500 mt-1">Febrero 2024</p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Payroll history */}
-        <div className="lg:col-span-2">
+      {!loading && payrollRecords.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Historial de Nóminas</CardTitle>
-            </CardHeader>
-            <CardContent padding="none">
-              <DataTable
-                data={mockPayrollRecords}
-                columns={columns}
-                searchable={true}
-                exportable={true}
-              />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Empleados en Nómina</p>
+                  <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
+                </div>
+                <Calculator className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Nómina Mensual</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${payrollRecords[0]?.grossAmount?.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-green-600 mt-1">Último período</p>
+                </div>
+                <Calculator className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Próximo Pago</p>
+                  <p className="text-2xl font-bold text-gray-900">15</p>
+                  <p className="text-sm text-yellow-600 mt-1">días restantes</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Estado Actual</p>
+                  <p className="text-lg font-bold text-yellow-600">
+                    {getStatusText(payrollRecords[0]?.status || 'draft')}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">{payrollRecords[0]?.period || 'Sin período'}</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-600" />
+              </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Main content */}
+      {!loading && payrollRecords.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Payroll history */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Nóminas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  data={payrollRecords}
+                  columns={columns}
+                  searchable={true}
+                  exportable={true}
+                />
+              </CardContent>
+            </Card>
+          </div>
 
         {/* Payroll details */}
         <div>
@@ -363,6 +374,26 @@ export function Payroll() {
           </Card>
         </div>
       </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && payrollRecords.length === 0 && !error && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Calculator className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No hay nóminas disponibles
+            </h3>
+            <p className="text-gray-600 mb-4">
+              No se han encontrado registros de nómina. Crea una nueva nómina para comenzar.
+            </p>
+            <Button onClick={createSamplePayrolls}>
+              <Plus className="w-4 h-4 mr-2" />
+              Crear Datos de Prueba
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
