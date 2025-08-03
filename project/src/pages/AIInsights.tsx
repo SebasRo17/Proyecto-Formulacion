@@ -1,12 +1,12 @@
 import React from 'react';
-import { Brain, TrendingUp, AlertTriangle, Users, DollarSign, CheckCircle } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, Users, DollarSign, CheckCircle, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useApp } from '../contexts/AppContext';
 
 export function AIInsights() {
-  const { aiInsights, employees } = useApp();
+  const { aiInsights, employees, loading, error, refreshData, createSampleData } = useApp();
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -50,59 +50,114 @@ export function AIInsights() {
             <Brain className="w-4 h-4 mr-1" />
             {aiInsights.length} insights activos
           </Badge>
-          <Button variant="outline">
-            Generar Nuevo Análisis
+          <Button variant="outline" onClick={refreshData} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Actualizando...' : 'Actualizar Datos'}
+          </Button>
+          <Button variant="outline" onClick={createSampleData} disabled={loading}>
+            Crear Datos de Prueba
           </Button>
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Error message */}
+      {error && (
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-800">Alertas Críticas</p>
-                <p className="text-2xl font-bold text-red-900">
-                  {aiInsights.filter(i => i.severity === 'high').length}
-                </p>
-                <p className="text-sm text-red-700 mt-1">Requieren acción inmediata</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+              <span className="text-red-800">{error}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshData}
+                className="ml-auto"
+              >
+                Reintentar
+              </Button>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-yellow-800">Predicción Promedio</p>
-                <p className="text-2xl font-bold text-yellow-900">
-                  {Math.round(aiInsights.reduce((sum, i) => sum + i.confidence, 0) / aiInsights.length)}%
-                </p>
-                <p className="text-sm text-yellow-700 mt-1">Nivel de confianza</p>
-              </div>
-              <Brain className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Loading state */}
+      {loading && aiInsights.length === 0 && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Cargando insights de IA...</p>
+          </div>
+        </div>
+      )}
 
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-800">Empleados Impactados</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {new Set(aiInsights.flatMap(i => i.affectedEmployees || [])).size}
-                </p>
-                <p className="text-sm text-blue-700 mt-1">Requieren seguimiento</p>
-              </div>
-              <Users className="w-8 h-8 text-blue-600" />
-            </div>
+      {/* Empty state */}
+      {!loading && aiInsights.length === 0 && !error && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No hay insights disponibles
+            </h3>
+            <p className="text-gray-600 mb-4">
+              No se han encontrado análisis de IA. Intenta generar un nuevo análisis.
+            </p>
+            <Button onClick={refreshData}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualizar
+            </Button>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Summary cards */}
+      {aiInsights.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-800">Alertas Críticas</p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {aiInsights.filter(i => i.severity === 'high').length}
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">Requieren acción inmediata</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">Predicción Promedio</p>
+                  <p className="text-2xl font-bold text-yellow-900">
+                    {aiInsights.length > 0 ? Math.round(aiInsights.reduce((sum, i) => sum + i.confidence, 0) / aiInsights.length) : 0}%
+                  </p>
+                  <p className="text-sm text-yellow-700 mt-1">Nivel de confianza</p>
+                </div>
+                <Brain className="w-8 h-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Empleados Impactados</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {new Set(aiInsights.flatMap(i => i.affectedEmployees || [])).size}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">Requieren seguimiento</p>
+                </div>
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Insights list */}
       <div className="space-y-4">

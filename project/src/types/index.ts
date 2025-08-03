@@ -37,6 +37,17 @@ export interface PayrollItem {
   createdAt: Date;
 }
 
+export interface PayrollRecord {
+  id: string;
+  period: string;
+  employees: number;
+  grossAmount: number;
+  deductions: number;
+  netAmount: number;
+  status: 'draft' | 'processing' | 'approved' | 'paid';
+  createdAt: Date;
+}
+
 export interface AIInsight {
   id: string;
   type: 'turnover_prediction' | 'performance_anomaly' | 'cost_optimization';

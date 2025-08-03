@@ -53,3 +53,58 @@ exports.deletePayroll = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Crear datos de prueba para nóminas
+exports.createSamplePayrolls = async (req, res) => {
+  try {
+    // Eliminar nóminas existentes para evitar duplicados
+    await Payroll.deleteMany({});
+    
+    const samplePayrolls = [
+      {
+        period: 'Enero 2024',
+        employees: [],
+        totalGross: 52500,
+        totalDeductions: 8750,
+        totalNet: 43750,
+        status: 'paid',
+        createdAt: new Date('2024-01-31')
+      },
+      {
+        period: 'Febrero 2024',
+        employees: [],
+        totalGross: 53200,
+        totalDeductions: 8850,
+        totalNet: 44350,
+        status: 'processing',
+        createdAt: new Date('2024-02-15')
+      },
+      {
+        period: 'Marzo 2024',
+        employees: [],
+        totalGross: 54100,
+        totalDeductions: 9020,
+        totalNet: 45080,
+        status: 'approved',
+        createdAt: new Date('2024-03-10')
+      },
+      {
+        period: 'Abril 2024',
+        employees: [],
+        totalGross: 53800,
+        totalDeductions: 8950,
+        totalNet: 44850,
+        status: 'draft',
+        createdAt: new Date('2024-04-05')
+      }
+    ];
+    
+    const createdPayrolls = await Payroll.insertMany(samplePayrolls);
+    res.status(201).json({
+      message: 'Nóminas de prueba creadas exitosamente',
+      payrolls: createdPayrolls
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
