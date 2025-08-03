@@ -15,10 +15,21 @@ exports.getStats = async (req, res) => {
       departmentCosts[emp.department] += emp.salary;
     });
 
+    // ROTACIÓN ANUAL (%)
+    const yearStart = new Date(new Date().getFullYear(), 0, 1);
+    const inactiveThisYear = await Employee.countDocuments({
+      status: 'inactive',
+      updatedAt: { $gte: yearStart }
+    });
+    const totalEmployees = await Employee.countDocuments();
+    const avgEmployees = totalEmployees / 2 || 1;
+    const turnover = Math.round((inactiveThisYear / avgEmployees) * 1000) / 10;
+
     res.json({
       totalActive,
       totalSalaries,
-      departmentCosts
+      departmentCosts,
+      turnover
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -57,28 +68,4 @@ exports.getPayrollTrends = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-exports.getTurnover = async (req, res) => {
-  try {
-    // MOCK: valor fijo
-    // const turnover = 8.5;
 
-    // cálculo real:
-    // Empleados dados de baja este año (status: 'inactive', updatedAt en este año)
-    const yearStart = new Date(new Date().getFullYear(), 0, 1);
-    const inactiveThisYear = await Employee.countDocuments({
-      status: 'inactive',
-      updatedAt: { $gte: yearStart }
-    });
-
-    // Promedio de empleados (puedes tomar total activos + inactivos)/2
-    const totalEmployees = await Employee.countDocuments();
-    const avgEmployees = totalEmployees / 2 || 1;
-
-    // Calcula rotación (%)
-    const turnover = Math.round((inactiveThisYear / avgEmployees) * 1000) / 10; // ej: 8.5%
-
-    res.json({ turnover });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
