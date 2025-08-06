@@ -9,4 +9,5 @@ router.get('/:id', auth, employeeCtrl.getEmployeeById);
 router.put('/:id', auth, employeeCtrl.updateEmployee);
 router.delete('/:id', auth, employeeCtrl.deleteEmployee);
 
+
 module.exports = router;

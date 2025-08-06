@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  HelpCircle, 
-  MessageCircle, 
-  Book, 
-  Video, 
-  Phone, 
+import {
+  HelpCircle,
+  MessageCircle,
+  Book,
+  Video,
+  Phone,
   Mail,
   Search,
   ChevronDown,
@@ -202,7 +202,7 @@ export function Support() {
                                 )}
                               </div>
                             </button>
-                            
+
                             {expandedQuestion === `${category.id}-${index}` && (
                               <div className="px-4 pb-4">
                                 <p className="text-sm text-gray-600 leading-relaxed">{faq.answer}</p>
