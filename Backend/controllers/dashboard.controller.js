@@ -1,5 +1,6 @@
 const Employee = require('../models/employee.model');
 const Payroll = require('../models/payroll.model');
+const AIInsight = require('../models/aiinsight.model'); 
 
 exports.getStats = async (req, res) => {
   try {
@@ -69,3 +70,12 @@ exports.getPayrollTrends = async (req, res) => {
   }
 };
 
+exports.getActiveInsightsCount = async (req, res) => {
+  try {
+    const activeCount = await AIInsight.countDocuments({ severity: 'high'});
+
+    res.json({ success: true, count: activeCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

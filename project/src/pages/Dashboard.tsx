@@ -14,23 +14,18 @@ import { LineChart } from '../components/charts/LineChart';
 import { BarChart } from '../components/charts/BarChart';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 
+
 export function Dashboard() {
-  const { totalActive, totalSalaries, turnover, departmentCosts, loading, error } = useDashboardStats();
-  console.log('Turnover recibido:', turnover);
+  const { totalActive, totalSalaries, turnover, departmentCosts, activeInsights, loading, error } = useDashboardStats();
 
-  // Datos estáticos de tendencias (puedes conectar luego)
-  const monthlyTrends = [
-    { name: 'Ene', value: 45000 },
-    { name: 'Feb', value: 47000 },
-    { name: 'Mar', value: 48500 },
-    { name: 'Abr', value: 46000 },
-    { name: 'May', value: 49000 },
-    { name: 'Jun', value: 51000 }
-  ];
 
-  const departmentChartData = Object.entries(departmentCosts).map(
-    ([name, value]) => ({ name, value })
-  );
+  const max = Math.max(...Object.values(departmentCosts));
+  const normalizedChartData = Object.entries(departmentCosts).map(([name, value]) => ({
+    name,
+    value: (value / max) * 100,  // valor para ver la barra
+    realValue: value             // valor real para mostrar
+  }));
+
 
 
   return (
@@ -107,7 +102,7 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Sugerencias IA</p>
-                <p className="text-3xl font-bold text-gray-900">2</p>
+                <p className="text-3xl font-bold text-gray-900">{activeInsights}</p>
               </div>
               <div className="p-3 bg-purple-50 rounded-full">
                 <Brain className="w-6 h-6 text-purple-600" />
@@ -127,7 +122,7 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LineChart data={monthlyTrends} color="#2563eb" height={200} />
+            <LineChart data={normalizedChartData} color="#2563eb" height={300} />
           </CardContent>
         </Card>
 
@@ -139,7 +134,7 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <BarChart data={departmentChartData} color="#10b981" height={200} />
+            <BarChart data={normalizedChartData} color="#10b981" height={300} />
           </CardContent>
         </Card>
       </div>
