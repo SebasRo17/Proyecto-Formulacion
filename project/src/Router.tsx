@@ -8,7 +8,6 @@ import { Employees } from './pages/Employees';
 import { Payroll } from './pages/Payroll';
 import { AIInsights } from './pages/AIInsights';
 import { Reports } from './pages/Reports';
-import { Notifications } from './pages/Notifications';
 import { Settings } from './pages/Settings';
 import { Support } from './pages/Support';
 
