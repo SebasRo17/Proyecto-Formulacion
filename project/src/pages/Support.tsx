@@ -1,21 +1,22 @@
+// project/src/pages/Support.tsx
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
+
 import {
   HelpCircle,
   MessageCircle,
-  Book,
-  Video,
-  Phone,
   Mail,
   Search,
   ChevronDown,
   ChevronRight,
-  ExternalLink
+
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 
+// Define las categorías y preguntas frecuentes
 const faqCategories = [
   {
     id: 'getting-started',
@@ -75,10 +76,49 @@ const faqCategories = [
   }
 ];
 
+// Componente principal de la página de soporte
 export function Support() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string>('getting-started');
   const [expandedQuestion, setExpandedQuestion] = useState<string>('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [priority, setPriority] = useState('Baja');
+
+  //funcion de envio 
+  const handleSend = async () => {
+    if (!subject.trim() || !message.trim()) {
+      alert('Por favor completa Asunto y Mensaje.');
+      return;
+    }
+
+    setStatus('sending');
+
+    try {
+      const SERVICE_ID = 'service_a8oy707';
+      const TEMPLATE_ID = 'template_9fxqp4b';
+      const PUBLIC_KEY = 'kXL92E0yCTW-jA5HV';
+
+      await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+        subject,
+        message,
+        priority,
+        email: 'senovaj25@gmail.com'
+      }, PUBLIC_KEY);
+
+      setStatus('success');
+      setSubject('');
+      setMessage('');
+      setPriority('Baja');
+    } catch (error) {
+      console.error(error);
+      setStatus('error');
+    } finally {
+      setTimeout(() => setStatus('idle'), 3000);
+    }
+  };
+
 
   const filteredCategories = faqCategories.map(category => ({
     ...category,
@@ -87,6 +127,7 @@ export function Support() {
       q.answer.toLowerCase().includes(searchTerm.toLowerCase())
     )
   })).filter(category => category.questions.length > 0);
+
 
   return (
     <div className="space-y-6">
@@ -98,10 +139,6 @@ export function Support() {
             Encuentra respuestas, guías y contacta con nuestro equipo de soporte
           </p>
         </div>
-        <Button>
-          <MessageCircle className="w-4 h-4 mr-2" />
-          Chat en Vivo
-        </Button>
       </div>
 
       {/* Quick actions */}
@@ -109,8 +146,8 @@ export function Support() {
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
             <MessageCircle className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-medium text-gray-900 mb-1">Chat en Vivo</h3>
-            <p className="text-sm text-gray-500">Soporte inmediato</p>
+            <h3 className="font-medium text-gray-900 mb-1">Contactanos</h3>
+            <p className="text-sm text-gray-500">Soporte inmediato via Whatsapp o llamada personalizada</p>
           </CardContent>
         </Card>
 
@@ -118,25 +155,10 @@ export function Support() {
           <CardContent className="p-6 text-center">
             <Mail className="w-8 h-8 text-green-600 mx-auto mb-3" />
             <h3 className="font-medium text-gray-900 mb-1">Email</h3>
-            <p className="text-sm text-gray-500">soporte@paysmart.ai</p>
+            <p className="text-sm text-gray-500">senovaj25@gmail.com</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-6 text-center">
-            <Phone className="w-8 h-8 text-purple-600 mx-auto mb-3" />
-            <h3 className="font-medium text-gray-900 mb-1">Teléfono</h3>
-            <p className="text-sm text-gray-500">+593 2 245-6789</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-6 text-center">
-            <Book className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-            <h3 className="font-medium text-gray-900 mb-1">Documentación</h3>
-            <p className="text-sm text-gray-500">Guías y tutoriales</p>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -230,31 +252,37 @@ export function Support() {
               <Input
                 label="Asunto"
                 placeholder="Describe tu consulta brevemente"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
               />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mensaje
-                </label>
-                <textarea
-                  rows={4}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe tu problema o consulta en detalle..."
-                />
-              </div>
+              <textarea
+                rows={4}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Describe tu problema o consulta en detalle..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prioridad
                 </label>
-                <select className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
                   <option>Baja</option>
                   <option>Media</option>
                   <option>Alta</option>
                   <option>Urgente</option>
                 </select>
               </div>
-              <Button className="w-full">
-                Enviar Consulta
+              <Button className="w-full" onClick={handleSend} disabled={status === 'sending'}>
+                {status === 'sending' ? 'Enviando...' : 'Enviar Consulta'}
               </Button>
+              {status === 'success' && (
+                <p className="text-green-600 text-sm mt-2">✅ Tu consulta ha sido enviada, nos comunicaremos contigo en brevedad.</p>
+              )}
             </CardContent>
           </Card>
         </div>

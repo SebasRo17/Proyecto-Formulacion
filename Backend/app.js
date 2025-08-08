@@ -17,6 +17,8 @@ app.use('/api/ai-insights', require('./routes/aiinsight.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
 
 
+
+
 app.get('/', (req, res) => {
   res.send('API PaySmart funcionando ✅');
 });

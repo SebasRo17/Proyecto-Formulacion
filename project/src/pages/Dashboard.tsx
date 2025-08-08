@@ -25,8 +25,6 @@ export function Dashboard() {
     ? netPayrolls.map(p => ({ name: p.period, value: p.totalNet }))
     : [];
 
-  console.log('Net Trends:', netTrends);
-
 
 
 
