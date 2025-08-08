@@ -18,6 +18,17 @@ import { useDashboardStats } from '../hooks/useDashboardStats';
 export function Dashboard() {
   const { totalActive, totalSalaries, turnover, departmentCosts, activeInsights, loading, error } = useDashboardStats();
 
+  //Evoluacion de la nomina
+  const { netPayrolls } = useDashboardStats();
+
+  const netTrends = Array.isArray(netPayrolls)
+    ? netPayrolls.map(p => ({ name: p.period, value: p.totalNet }))
+    : [];
+
+  console.log('Net Trends:', netTrends);
+
+
+
 
   const max = Math.max(...Object.values(departmentCosts));
   const normalizedChartData = Object.entries(departmentCosts).map(([name, value]) => ({
@@ -122,7 +133,7 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LineChart data={normalizedChartData} color="#2563eb" height={300} />
+            <LineChart data={netTrends} color="#2563eb" height={300} />
           </CardContent>
         </Card>
 
