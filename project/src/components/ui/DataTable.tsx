@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
-import { Search, Filter, Download, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Input } from './Input';
-import { Button } from './Button';
+import React, { useState } from "react";
+import {
+  Search,
+  Filter,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Input } from "./Input";
+import { Button } from "./Button";
 
 interface Column<T> {
   key: keyof T | string;
@@ -19,6 +25,7 @@ interface DataTableProps<T> {
   exportable?: boolean;
   pageSize?: number;
   className?: string;
+  onOpenFilters?: () => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -28,18 +35,19 @@ export function DataTable<T extends Record<string, any>>({
   filterable = false,
   exportable = false,
   pageSize = 10,
-  className = ''
+  className = "",
+  onOpenFilters,
 }: DataTableProps<T>) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
-    direction: 'asc' | 'desc';
+    direction: "asc" | "desc";
   } | null>(null);
 
   // Filter data based on search term
-  const filteredData = data.filter(item =>
-    Object.values(item).some(value =>
+  const filteredData = data.filter((item) =>
+    Object.values(item).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
@@ -53,10 +61,10 @@ export function DataTable<T extends Record<string, any>>({
       const bValue = b[sortConfig.key];
 
       if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+        return sortConfig.direction === "asc" ? -1 : 1;
       }
       if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
+        return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
     });
@@ -70,13 +78,68 @@ export function DataTable<T extends Record<string, any>>({
   );
 
   const handleSort = (key: string) => {
-    const direction = sortConfig?.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    const direction =
+      sortConfig?.key === key && sortConfig.direction === "asc"
+        ? "desc"
+        : "asc";
     setSortConfig({ key, direction });
   };
 
   const handleExport = () => {
-    // Mock export functionality
-    console.log('Exporting data...', sortedData);
+    const csvRows = [
+      columns
+        .filter((c) => c.key !== "actions")
+        .map((c) => `"${c.header}"`)
+        .join(","),
+    ];
+
+    sortedData.forEach((row) => {
+      csvRows.push(
+        columns
+          .filter((c) => c.key !== "actions")
+          .map((c) => {
+            // Exportación custom por columna
+            switch (c.key) {
+              case "name":
+                // Si quieres exportar nombre + cédula juntos
+                return `"${row.name} (${row.cedula})"`;
+              // O solo nombre: return `"${row.name}"`;
+              case "position":
+                // Exporta posición + departamento
+                return `"${row.position} (${row.department})"`;
+              case "salary":
+                return `"${row.salary?.toLocaleString()}"`;
+              case "startDate":
+                return `"${
+                  row.startDate
+                    ? new Date(row.startDate).toLocaleDateString("es-EC")
+                    : ""
+                }"`;
+              case "status":
+                return row.status === "active" ? "Activo" : "Inactivo";
+              default:
+                // Si es string/number, sácalo plano; si es objeto, usa JSON.stringify o saca el campo relevante
+                const value = row[c.key as keyof typeof row];
+                if (typeof value === "string" || typeof value === "number")
+                  return `"${value}"`;
+                return `"${
+                  value !== undefined && value !== null ? String(value) : ""
+                }"`;
+            }
+          })
+          .join(",")
+      );
+    });
+
+    const csvContent = "\uFEFF" + csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "empleados.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -96,7 +159,7 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           )}
           {filterable && (
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={onOpenFilters}>
               <Filter className="w-4 h-4 mr-2" />
               Filtros
             </Button>
@@ -120,16 +183,18 @@ export function DataTable<T extends Record<string, any>>({
                   <th
                     key={index}
                     className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                      column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                      column.sortable ? "cursor-pointer hover:bg-gray-100" : ""
                     }`}
                     style={{ width: column.width }}
-                    onClick={() => column.sortable && handleSort(column.key as string)}
+                    onClick={() =>
+                      column.sortable && handleSort(column.key as string)
+                    }
                   >
                     <div className="flex items-center space-x-1">
                       <span>{column.header}</span>
                       {column.sortable && sortConfig?.key === column.key && (
                         <span className="text-blue-600">
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          {sortConfig.direction === "asc" ? "↑" : "↓"}
                         </span>
                       )}
                     </div>
@@ -141,8 +206,13 @@ export function DataTable<T extends Record<string, any>>({
               {paginatedData.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map((column, colIndex) => (
-                    <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {column.render ? column.render(item) : String(item[column.key as keyof T])}
+                    <td
+                      key={colIndex}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      {column.render
+                        ? column.render(item)
+                        : String(item[column.key as keyof T])}
                     </td>
                   ))}
                 </tr>
@@ -156,14 +226,16 @@ export function DataTable<T extends Record<string, any>>({
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
             <div className="flex items-center">
               <p className="text-sm text-gray-700">
-                Mostrando {(currentPage - 1) * pageSize + 1} a {Math.min(currentPage * pageSize, sortedData.length)} de {sortedData.length} resultados
+                Mostrando {(currentPage - 1) * pageSize + 1} a{" "}
+                {Math.min(currentPage * pageSize, sortedData.length)} de{" "}
+                {sortedData.length} resultados
               </p>
             </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -174,7 +246,9 @@ export function DataTable<T extends Record<string, any>>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="w-4 h-4" />
