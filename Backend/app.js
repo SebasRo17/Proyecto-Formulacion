@@ -5,11 +5,28 @@ const cors = require('cors');
 const app = express();
 
 // Middlewares
-app.use(cors());
 app.use(express.json());
 // Soporte para application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+
+// Config CORS para prod y dev
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'https://proyecto-formulacion.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permite solicitudes sin origin (como Postman o health checks)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
 app.use('/api/employees', require('./routes/employee.routes'));
 app.use('/api/auth', require('./routes/auth.routes'));

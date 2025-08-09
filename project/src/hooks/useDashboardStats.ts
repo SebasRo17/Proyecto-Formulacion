@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 
 
@@ -45,14 +46,14 @@ const { token } = useAuth();
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('token');
+  const token = localStorage.getItem('paysmart_token');
 
       const [statsRes, insightsRes, netRes] = await Promise.all([
-        axios.get<DashboardStats>('http://localhost:5000/api/dashboard/stats', {
+        axios.get<DashboardStats>(`${API_BASE_URL}/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get<{ success: boolean; count: number }>('http://localhost:5000/api/dashboard/active-insights-count'),
-        axios.get<{ success: boolean; data: NetPayroll[] }>('http://localhost:5000/api/dashboard/net-payrolls') // <-- nuevo
+        axios.get<{ success: boolean; count: number }>(`${API_BASE_URL}/dashboard/active-insights-count`),
+        axios.get<{ success: boolean; data: NetPayroll[] }>(`${API_BASE_URL}/dashboard/net-payrolls`) // <-- nuevo
       ]);
 
         setDashboardData({

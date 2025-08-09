@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Plus,
   Edit,
@@ -23,48 +23,9 @@ import { DataTable } from "../components/ui/DataTable";
 import { useEmployees } from "../hooks/useEmployees";
 import { useAuth } from "../contexts/AuthContext";
 import type { Employee } from "../types";
+import { API_BASE_URL } from "../config";
 
-function exportToCSV(data: Employee[], filename: string) {
-  const csvRows = [
-    [
-      "Nombre",
-      "Cédula",
-      "Email",
-      "Teléfono",
-      "Cargo",
-      "Departamento",
-      "Salario",
-      "Fecha de Ingreso",
-      "Estado",
-    ].join(","),
-  ];
-
-  data.forEach((e) => {
-    csvRows.push(
-      [
-        `"${e.name}"`,
-        `"${e.cedula}"`,
-        `"${e.email}"`,
-        `"${e.phone}"`,
-        `"${e.position}"`,
-        `"${e.department}"`,
-        e.salary,
-        e.startDate ? new Date(e.startDate).toLocaleDateString("es-EC") : "",
-        e.status === "active" ? "Activo" : "Inactivo",
-      ].join(",")
-    );
-  });
-
-  const csvContent = csvRows.join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.setAttribute("href", url);
-  a.setAttribute("download", filename);
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+// Función exportToCSV eliminada por no usarse actualmente
 
 export function Employees() {
   const { employees, loading, error, setEmployees } = useEmployees();
@@ -79,7 +40,7 @@ export function Employees() {
   const [showFilters, setShowFilters] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [filterText, setFilterText] = useState("");
+  const [filterText, _setFilterText] = useState("");
   const filteredEmployees = employees.filter(
     (e) =>
       (e.name.toLowerCase().includes(filterText.toLowerCase()) ||
@@ -98,13 +59,13 @@ export function Employees() {
     phone: "",
     address: "",
   });
-  const [adding, setAdding] = useState(false);
+  const [_adding, setAdding] = useState(false);
 
   // Agregar empleado - POST al backend
   const handleAddEmployee = async () => {
     setAdding(true);
     try {
-      const res = await fetch("http://localhost:5000/api/employees", {
+      const res = await fetch(`${API_BASE_URL}/employees`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +105,7 @@ export function Employees() {
   const handleDeleteEmployee = async (id: string) => {
     if (!window.confirm("¿Estás seguro de eliminar este empleado?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/employees/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,11 +113,11 @@ export function Employees() {
       });
       if (!res.ok) throw new Error("Error al eliminar empleado");
       setEmployees((prev) =>
-        prev.filter((emp) => emp._id !== id && emp.id !== id)
+        prev.filter((emp) => (emp as any)._id !== id && emp.id !== id)
       );
       if (
         selectedEmployee &&
-        (selectedEmployee._id === id || selectedEmployee.id === id)
+        ((selectedEmployee as any)._id === id || selectedEmployee.id === id)
       ) {
         setSelectedEmployee(null);
       }
@@ -251,7 +212,9 @@ export function Employees() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDeleteEmployee(employee._id || employee.id)}
+            onClick={() =>
+              handleDeleteEmployee((employee as any)._id || employee.id)
+            }
           >
             <Trash2 className="w-4 h-4 text-red-600" />
           </Button>
@@ -363,7 +326,7 @@ export function Employees() {
             <CardHeader>
               <CardTitle>Lista de Empleados</CardTitle>
             </CardHeader>
-            <CardContent padding="none">
+            <CardContent>
               <DataTable
                 data={filteredEmployees}
                 columns={columns}
@@ -752,7 +715,9 @@ export function Employees() {
                   setEditing(true);
                   try {
                     const res = await fetch(
-                      `http://localhost:5000/api/employees/${editEmployee._id}`,
+                      `${API_BASE_URL}/employees/${
+                        (editEmployee as any)._id || editEmployee.id
+                      }`,
                       {
                         method: "PUT",
                         headers: {
@@ -770,7 +735,12 @@ export function Employees() {
                       alert(data.error || "No se pudo actualizar el empleado");
                     } else {
                       setEmployees((prev) =>
-                        prev.map((emp) => (emp._id === data._id ? data : emp))
+                        prev.map((emp) =>
+                          ((emp as any)._id || emp.id) ===
+                          (data && (data._id || data.id))
+                            ? data
+                            : emp
+                        )
                       );
                       setShowEditModal(false);
                       setSelectedEmployee(data); // Actualiza el panel de detalles
