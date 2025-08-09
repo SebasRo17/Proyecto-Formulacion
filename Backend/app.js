@@ -18,6 +18,8 @@ app.use('/api/notifications', require('./routes/notification.routes'));
 app.get('/health', (req, res) => res.status(200).send('ok'));
 
 
+
+
 app.get('/', (req, res) => {
   res.send('API PaySmart funcionando ✅');
 });

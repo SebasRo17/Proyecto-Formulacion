@@ -79,3 +79,19 @@ exports.getActiveInsightsCount = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Retorna el periodo y total neto de todas las nóminas
+exports.getNetPayrolls = async (req, res) => {
+  try {
+    const payrolls = await Payroll.find().sort({ period: 1 });
+
+    const netData = payrolls.map(p => ({
+      period: p.period,
+      totalNet: p.totalNet
+    }));
+
+    res.json({ success: true, data: netData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

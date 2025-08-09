@@ -3,13 +3,14 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
 
-// 1️Define el tipo de los datos que devuelve el backend
+// Define el tipo de los datos que devuelve el backend
 type DashboardStats = {
   totalActive: number;
   totalSalaries: number;
   turnover: number;
   departmentCosts: { [key: string]: number }; 
-  activeInsights: number; 
+  activeInsights: number;
+  netPayrolls: NetPayroll[];
 };
 
 //  Define el estado completo con loading y error
@@ -17,6 +18,13 @@ type DashboardStatsState = DashboardStats & {
   loading: boolean;
   error: string | null;
 };
+
+//Define un nuvo tipo para netPayrolls
+type NetPayroll = {
+  period: string;
+  totalNet: number;
+};
+
 
 // Hook principal
 export function useDashboardStats() {
@@ -26,6 +34,7 @@ export function useDashboardStats() {
     turnover: 0,
     activeInsights: 0,
     departmentCosts: {},
+    netPayrolls: [],
     loading: true,
     error: null
      });
@@ -38,16 +47,18 @@ const { token } = useAuth();
       try {
         const token = localStorage.getItem('token');
 
-      const [statsRes, insightsRes] = await Promise.all([
+      const [statsRes, insightsRes, netRes] = await Promise.all([
         axios.get<DashboardStats>('http://localhost:5000/api/dashboard/stats', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get<{ success: boolean; count: number }>('http://localhost:5000/api/dashboard/active-insights-count')
+        axios.get<{ success: boolean; count: number }>('http://localhost:5000/api/dashboard/active-insights-count'),
+        axios.get<{ success: boolean; data: NetPayroll[] }>('http://localhost:5000/api/dashboard/net-payrolls') // <-- nuevo
       ]);
 
         setDashboardData({
           ...statsRes.data,
           activeInsights: insightsRes.data.count,
+          netPayrolls: netRes.data.data,
           loading: false,
           error: null
         });
