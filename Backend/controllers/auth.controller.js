@@ -5,12 +5,30 @@ const jwt = require('jsonwebtoken');
 // Registro de usuario
 exports.register = async (req, res) => {
   try {
+    // Validación defensiva del body
+    if (!req.body || typeof req.body !== 'object') {
+      return res.status(400).json({
+        error: "Cuerpo de la solicitud inválido o ausente. Asegúrate de enviar JSON con 'Content-Type: application/json'."
+      });
+    }
+
     const { name, email, password, role, company, avatar } = req.body;
+
+    // Validación de campos requeridos
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        error: 'Los campos name, email y password son obligatorios.'
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
-      name, email,
+      name,
+      email,
       password: hashedPassword,
-      role, company, avatar
+      role,
+      company,
+      avatar
     });
     await user.save();
     res.status(201).json({ message: 'Usuario registrado correctamente' });
