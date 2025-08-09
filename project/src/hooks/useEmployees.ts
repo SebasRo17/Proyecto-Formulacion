@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import type { Employee } from '../types';
+import { API_BASE_URL } from '../config';
 
 export function useEmployees() {
   const { token } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [activeCount, setActiveCount] = useState<number>(0); 
+  // const [activeCount, setActiveCount] = useState<number>(0); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalSalaries, setTotalSalaries] = useState<number>(0); // Total salaries of all employees
+  // const [totalSalaries, setTotalSalaries] = useState<number>(0); // Total salaries of all employees
 
   useEffect(() => {
     if (!token) return;
@@ -17,7 +18,7 @@ export function useEmployees() {
     const fetchEmployees = async () => {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:5000/api/employees', {
+  const res = await fetch(`${API_BASE_URL}/employees`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

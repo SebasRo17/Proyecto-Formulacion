@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User } from '../types';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { API_BASE_URL } from "../config";
+import type { User } from "../types";
 
 interface AuthContextType {
   user: User | null;
@@ -18,8 +25,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Cargar usuario/token de localStorage al iniciar
   useEffect(() => {
-    const storedUser = localStorage.getItem('paysmart_user');
-    const storedToken = localStorage.getItem('paysmart_token');
+    const storedUser = localStorage.getItem("paysmart_user");
+    const storedToken = localStorage.getItem("paysmart_token");
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
       setToken(storedToken);
@@ -30,18 +37,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
       if (res.ok && data.token && data.user) {
         setUser(data.user);
         setToken(data.token);
-        localStorage.setItem('paysmart_user', JSON.stringify(data.user));
-        localStorage.setItem('paysmart_token', data.token);
+        localStorage.setItem("paysmart_user", JSON.stringify(data.user));
+        localStorage.setItem("paysmart_token", data.token);
         setIsLoading(false);
         return true;
       }
@@ -57,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('paysmart_user');
-    localStorage.removeItem('paysmart_token');
+    localStorage.removeItem("paysmart_user");
+    localStorage.removeItem("paysmart_token");
   }, []);
 
   return (
@@ -71,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
