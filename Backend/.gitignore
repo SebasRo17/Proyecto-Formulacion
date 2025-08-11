@@ -1,5 +1,5 @@
 node_modules
 project/package-lock.json
 project/package.json
-*.env
 .env
+.env.local
