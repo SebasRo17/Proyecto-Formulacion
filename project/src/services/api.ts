@@ -2,15 +2,75 @@ import { API_BASE_URL } from '../config';
 
 export const api = {
   // AI Insights endpoints
-  async getAIInsights() {
+  async getAIInsights(params?: { period?: string; severity?: string; type?: string; department?: string; companyId?: string }) {
     try {
-      const response = await fetch(`${API_BASE_URL}/ai-insights`);
+      const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      const response = await fetch(`${API_BASE_URL}/ai-insights${qs}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
       console.error('Error fetching AI insights:', error);
+      throw error;
+    }
+  },
+
+  async deleteAIInsight(id: string, token?: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai-insights/${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting AI insight:', error);
+      throw error;
+    }
+  },
+
+  async postToUrl(fullUrl: string, token?: string) {
+    try {
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} body: ${text}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error posting to custom URL:', error);
+      throw error;
+    }
+  },
+
+  async generateAIInsights(period: string, token?: string, companyId?: string, count?: number) {
+    try {
+      const qs = new URLSearchParams({ period, ...(companyId ? { companyId } : {}), ...(count ? { count: String(count) } : {}) }).toString();
+      const response = await fetch(`${API_BASE_URL}/ai-insights/generate?${qs}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} body: ${text}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
       throw error;
     }
   },
@@ -31,6 +91,30 @@ export const api = {
       console.error('Error creating sample insights:', error);
       throw error;
     }
+  },
+
+  async patchAIInsight(id: string, body: any, token?: string) {
+    const response = await fetch(`${API_BASE_URL}/ai-insights/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  async getAIInsightsStats(params: { from?: string; to?: string; companyId?: string }) {
+    const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    const response = await fetch(`${API_BASE_URL}/ai-insights/stats${qs}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   },
 
   // Payroll endpoints
@@ -79,9 +163,13 @@ export const api = {
   },
 
   // Employees endpoints  
-  async getEmployees() {
+  async getEmployees(token?: string) {
     try {
-      const response = await fetch(`${API_BASE_URL}/employees`);
+      const response = await fetch(`${API_BASE_URL}/employees`, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
