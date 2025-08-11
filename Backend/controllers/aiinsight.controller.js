@@ -41,19 +41,34 @@ exports.generateInsights = async (req, res) => {
   try {
     const period = req.query.period;
     const companyId = req.user?.company || req.query.companyId || 'default';
+    const requested = parseInt(req.query.count, 10);
+    const maxNew = isNaN(requested) ? undefined : Math.min(3, Math.max(1, requested));
     if (!period) return res.status(400).json({ error: 'period es requerido (YYYY-MM)' });
+
+    // Limite global de 10 insights por companyId+period
+    const existingCount = await AIInsight.countDocuments({ companyId, period });
+    if (existingCount >= 10) {
+      return res.status(400).json({ error: 'Límite máximo de 10 insights alcanzado para este periodo' });
+    }
 
     // Servicio de contexto
     const context = await buildContext({ companyId, period });
 
     // Orquestación LLM
-    const result = await orchestrate({ companyId, period, context });
+    // Ajustar maxNew según espacio restante hasta 10
+    const remaining = 10 - existingCount;
+    const effMax = maxNew ? Math.min(maxNew, remaining) : remaining;
+    if (effMax <= 0) {
+      return res.status(400).json({ error: 'No hay espacio para más insights' });
+    }
+    const result = await orchestrate({ companyId, period, context, maxNew: effMax });
 
     res.status(201).json({
       message: result.reused ? 'Resultados previos reutilizados' : 'Insights generados',
       inputHash: result.inputHash,
       model: result.model,
-      count: result.generated.length,
+  count: result.generated.length,
+  remainingAfter: await AIInsight.countDocuments({ companyId, period }),
       insights: result.generated
     });
   } catch (err) {

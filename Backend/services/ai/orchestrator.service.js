@@ -70,7 +70,7 @@ async function deduplicate({ newInsights, prevInsightsBrief }) {
   return keep;
 }
 
-async function orchestrate({ companyId, period, context }) {
+async function orchestrate({ companyId, period, context, maxNew }) {
   const input = { companyId, period, contextVersion: 'v1', context };
   const inputHash = hashInput(input);
 
@@ -87,8 +87,9 @@ async function orchestrate({ companyId, period, context }) {
   // Validación
   const { insights: validated, warnings } = await validateInsights(rawInsights);
 
-  // Límite máx 8
-  let limited = validated.slice(0, 8);
+  // Límite configurable (máx 8, y si se pasa maxNew restringir)
+  const cap = Math.min(8, typeof maxNew === 'number' && maxNew > 0 ? maxNew : 8);
+  let limited = validated.slice(0, cap);
 
   // Deduplicación frente a títulos previos
   limited = await deduplicate({ newInsights: limited, prevInsightsBrief: context.prevInsightsBrief || [] });

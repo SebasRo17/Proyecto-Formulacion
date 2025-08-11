@@ -16,6 +16,7 @@ interface AppContextType {
   payrollRecords: PayrollRecord[];
   aiInsights: AIInsight[];
   setAiInsights: (insights: AIInsight[]) => void;
+  deleteInsight: (id: string) => Promise<void>;
   notifications: Notification[];
   reports: Report[];
   currentPage: string;
@@ -26,6 +27,12 @@ interface AppContextType {
   refreshData: () => void;
   createSampleData: () => Promise<void>;
   createSamplePayrolls: () => Promise<void>;
+  generateInsightsCustom: (url: string) => Promise<void>;
+  generateInsights: (
+    period: string,
+    companyId?: string,
+    count?: number
+  ) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -188,6 +195,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           []
         ).map((emp: any) => emp?._id || emp),
         createdAt: new Date(insight.createdAt || Date.now()),
+        rationale: insight.rationale,
+        sourceMetrics: insight.sourceMetrics,
+        status: insight.status,
+        notes: insight.notes?.map((n: any) => ({
+          note: n.note,
+          at: new Date(n.at),
+        })),
       }));
 
       setAiInsights(transformedData);
@@ -261,6 +275,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteInsight = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("paysmart_token") || undefined;
+      await api.deleteAIInsight(id, token || undefined);
+      // Refrescar desde backend para asegurar eliminación real
+      await fetchAIInsights();
+    } catch (err) {
+      console.error("Error deleting insight:", err);
+      setError("No se pudo eliminar el insight");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateInsightsCustom = async (url: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("paysmart_token") || undefined;
+      await api.postToUrl(url, token || undefined);
+      await fetchAIInsights();
+    } catch (err) {
+      console.error("Error generando insights personalizados:", err);
+      setError("Error al generar insights");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateInsights = async (
+    period: string,
+    companyId?: string,
+    count?: number
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("paysmart_token") || undefined;
+      await api.generateAIInsights(
+        period,
+        token || undefined,
+        companyId,
+        count
+      );
+      await fetchAIInsights();
+    } catch (err) {
+      console.error("Error generando insights:", err);
+      setError("Error al generar insights");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to create sample payroll data
   const createSamplePayrolls = async () => {
     try {
@@ -326,6 +395,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         payrollRecords,
         aiInsights,
         setAiInsights,
+        deleteInsight,
         notifications,
         reports,
         currentPage,
@@ -336,6 +406,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         createSampleData,
         createSamplePayrolls,
+        generateInsightsCustom,
+        generateInsights,
       }}
     >
       {children}

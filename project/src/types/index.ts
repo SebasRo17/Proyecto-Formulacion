@@ -58,6 +58,11 @@ export interface AIInsight {
   recommendations: string[];
   affectedEmployees?: string[];
   createdAt: Date;
+  // Campos opcionales adicionales provenientes del backend
+  rationale?: string;
+  sourceMetrics?: string[];
+  status?: string;
+  notes?: { note: string; at: Date }[];
 }
 
 export interface Company {
