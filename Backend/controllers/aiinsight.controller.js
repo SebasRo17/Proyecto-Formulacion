@@ -1,19 +1,124 @@
 const AIInsight = require('../models/aiinsight.model');
+const { buildContext } = require('../services/ai/context.service');
+const { orchestrate } = require('../services/ai/orchestrator.service');
 
+// GET /ai-insights?period=YYYY-MM&severity=&type=&department=
 exports.getInsights = async (req, res) => {
   try {
-    const insights = await AIInsight.find().populate('affectedEmployees');
-    res.json(insights);
+    const { period, severity, type, department, companyId } = req.query;
+    const filter = {};
+    if (companyId) filter.companyId = companyId;
+    if (period) filter.period = period;
+    if (severity) filter.severity = severity;
+    if (type) filter.type = type;
+
+    let query = AIInsight.find(filter);
+    let populated = false;
+    if (department) {
+      query = query.populate({ path: 'affectedEmployeeIds', match: { department } });
+      populated = true;
+    }
+    let insights = await query.lean();
+    if (department && populated) {
+      // Filtra los insights que no tienen empleados relacionados en ese departamento
+      insights = insights.filter(i => Array.isArray(i.affectedEmployeeIds) && i.affectedEmployeeIds.length > 0);
+    }
+    const visible = insights.filter(i => i.severity === 'critical' || (['medium','high','critical'].includes(i.severity) && (i.confidence || 0) >= 0.6));
+    const order = { critical: 3, high: 2, medium: 1, low: 0 };
+    visible.sort((a, b) =>
+      (order[b.severity] || 0) - (order[a.severity] || 0) ||
+      (b.confidence || 0) - (a.confidence || 0) ||
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    res.json(visible);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// POST /ai-insights/generate?period=YYYY-MM
+exports.generateInsights = async (req, res) => {
+  try {
+    const period = req.query.period;
+    const companyId = req.user?.company || req.query.companyId || 'default';
+    if (!period) return res.status(400).json({ error: 'period es requerido (YYYY-MM)' });
+
+    // Servicio de contexto
+    const context = await buildContext({ companyId, period });
+
+    // Orquestación LLM
+    const result = await orchestrate({ companyId, period, context });
+
+    res.status(201).json({
+      message: result.reused ? 'Resultados previos reutilizados' : 'Insights generados',
+      inputHash: result.inputHash,
+      model: result.model,
+      count: result.generated.length,
+      insights: result.generated
+    });
+  } catch (err) {
+    console.error('generateInsights error', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PATCH /ai-insights/:id
+exports.patchInsight = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, note, usefulnessScore } = req.body;
+    const update = {};
+    if (status) update.status = status;
+    if (note) update.$push = { ...(update.$push || {}), notes: { note, at: new Date() } };
+    if (typeof usefulnessScore === 'number') update.usefulnessScore = usefulnessScore;
+    const insight = await AIInsight.findByIdAndUpdate(id, update, { new: true });
+    if (!insight) return res.status(404).json({ error: 'Insight no encontrado' });
+    res.json(insight);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// GET /ai-insights/stats?from=YYYY-MM&to=YYYY-MM
+exports.getStats = async (req, res) => {
+  try {
+    const { from, to, companyId } = req.query;
+    const filter = {};
+    if (companyId) filter.companyId = companyId;
+    if (from || to) {
+      filter.period = {};
+      if (from) filter.period.$gte = from;
+      if (to) filter.period.$lte = to;
+    }
+    const data = await AIInsight.aggregate([
+      { $match: filter },
+      { $group: { _id: { type: '$type', severity: '$severity' }, count: { $sum: 1 } } },
+    ]);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Compat: crear insight manual
 exports.createInsight = async (req, res) => {
   try {
-    const insight = new AIInsight(req.body);
-    await insight.save();
-    await insight.populate('affectedEmployees');
+    const body = req.body || {};
+    // mapear compat anterior
+    const mapped = {
+      companyId: body.companyId || 'default',
+      period: body.period || new Date().toISOString().slice(0,7),
+      type: body.type,
+      title: body.title,
+      description: body.description,
+      severity: body.severity || 'medium',
+      confidence: typeof body.confidence === 'number' && body.confidence > 1 ? body.confidence/100 : (body.confidence || 0.7),
+      recommendedAction: (body.recommendations && body.recommendations[0]) || body.recommendedAction,
+      affectedEmployeeIds: body.affectedEmployees || body.affectedEmployeeIds || [],
+      sourceMetrics: body.sourceMetrics || [],
+      rationale: body.rationale || '',
+    };
+    const insight = await AIInsight.create(mapped);
     res.status(201).json(insight);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -26,12 +131,8 @@ exports.updateInsight = async (req, res) => {
       req.params.id,
       req.body,
       { new: true }
-    ).populate('affectedEmployees');
-    
-    if (!insight) {
-      return res.status(404).json({ error: 'Insight no encontrado' });
-    }
-    
+    );
+    if (!insight) return res.status(404).json({ error: 'Insight no encontrado' });
     res.json(insight);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -41,73 +142,39 @@ exports.updateInsight = async (req, res) => {
 exports.deleteInsight = async (req, res) => {
   try {
     const insight = await AIInsight.findByIdAndDelete(req.params.id);
-    
-    if (!insight) {
-      return res.status(404).json({ error: 'Insight no encontrado' });
-    }
-    
+    if (!insight) return res.status(404).json({ error: 'Insight no encontrado' });
     res.json({ message: 'Insight eliminado exitosamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Método para crear insights de prueba
+// Método para crear insights de prueba (adaptado al nuevo contrato)
 exports.createSampleInsights = async (req, res) => {
   try {
-    // Eliminar insights existentes para evitar duplicados
     await AIInsight.deleteMany({});
-    
-    const sampleInsights = [
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const sample = [
       {
-        type: 'turnover_prediction',
-        title: 'Riesgo de Rotación Detectado',
-        description: 'El algoritmo ha identificado a 2 empleados con alta probabilidad de renunciar en los próximos 3 meses basado en patrones de comportamiento y satisfacción laboral.',
-        severity: 'high',
-        confidence: 87,
-        recommendations: [
-          'Programar reuniones 1:1 con los empleados identificados',
-          'Revisar la estructura salarial del departamento',
-          'Implementar plan de desarrollo profesional',
-          'Considerar beneficios adicionales para retención'
-        ],
-        affectedEmployees: []
+        companyId: 'default', period,
+        type: 'turnover_prediction', title: 'Riesgo de Rotación Detectado',
+        description: '2 empleados con alta probabilidad de renunciar en 3 meses.',
+        severity: 'high', confidence: 0.87,
+        recommendedAction: 'Programar 1:1 y revisar plan de carrera',
+        affectedEmployeeIds: [], sourceMetrics: ['turnover.inactiveRate'], rationale: 'Tasa inactivos creciente'
       },
       {
-        type: 'cost_optimization',
-        title: 'Oportunidad de Optimización de Costos',
-        description: 'Se detectaron patrones en horas extra que podrían optimizarse mediante mejor distribución de carga laboral.',
-        severity: 'medium',
-        confidence: 73,
-        recommendations: [
-          'Redistribuir carga de trabajo en el departamento de Tecnología',
-          'Considerar contratación de personal adicional temporal',
-          'Revisar procesos para mejorar eficiencia',
-          'Implementar herramientas de automatización'
-        ],
-        affectedEmployees: []
-      },
-      {
-        type: 'performance_anomaly',
-        title: 'Anomalía en Rendimiento Detectada',
-        description: 'Se ha identificado una disminución en la productividad general del 12% en el último trimestre.',
-        severity: 'medium',
-        confidence: 68,
-        recommendations: [
-          'Analizar factores externos que puedan estar afectando el rendimiento',
-          'Revisar herramientas y recursos disponibles para los empleados',
-          'Considerar programas de capacitación adicional',
-          'Evaluar la carga de trabajo actual'
-        ],
-        affectedEmployees: []
+        companyId: 'default', period,
+        type: 'cost_optimization', title: 'Oportunidad de Optimización de Costos',
+        description: 'Patrones de horas extra incrementales en Tecnología.',
+        severity: 'medium', confidence: 0.73,
+        recommendedAction: 'Redistribuir carga y evaluar automatización',
+        affectedEmployeeIds: [], sourceMetrics: ['perDepartment.monthlyVariation'], rationale: 'Variación mensual positiva consecutiva'
       }
     ];
-    
-    const createdInsights = await AIInsight.insertMany(sampleInsights);
-    res.status(201).json({
-      message: 'Insights de prueba creados exitosamente',
-      insights: createdInsights
-    });
+    const created = await AIInsight.insertMany(sample);
+    res.status(201).json({ message: 'OK', insights: created });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
