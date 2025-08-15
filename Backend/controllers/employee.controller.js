@@ -54,5 +54,21 @@ exports.deleteEmployee = async (req, res) => {
   }
 };
 
+// Actualizar saldo de vacaciones
+exports.updateVacationBalance = async (req, res) => {
+  try {
+    const { balance } = req.body;
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      { vacationBalance: Number(balance || 0), vacationUpdatedAt: new Date() },
+      { new: true }
+    );
+    if (!employee) return res.status(404).json({ error: 'Empleado no encontrado' });
+    res.json(employee);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 
 
