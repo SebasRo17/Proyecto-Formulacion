@@ -8,6 +8,7 @@ router.get('/stats', dashboardCtrl.getStats);
 router.get('/trends', auth, dashboardCtrl.getPayrollTrends);
 router.get('/active-insights-count', dashboardCtrl.getActiveInsightsCount);
 router.get('/net-payrolls', dashboardCtrl.getNetPayrolls);
+router.get('/insights/severity-stats', dashboardCtrl.getInsightSeverityStats);
 
 
 module.exports = router;

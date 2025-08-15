@@ -162,6 +162,62 @@ export const api = {
     }
   },
 
+  // Calculadoras de nómina
+  async calcDecimoTercero(body: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/calculate/decimo-tercero`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async calcDecimoCuarto(body: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/calculate/decimo-cuarto`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async calcVacaciones(body: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/calculate/vacaciones`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async calcLiquidacion(body: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/calculate/liquidacion`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async applyCalculator(payload: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/apply`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async upsertPayroll(payload: any) {
+    const res = await fetch(`${API_BASE_URL}/payrolls/upsert`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  async updateVacationBalance(employeeId: string, balance: number, token?: string) {
+    const res = await fetch(`${API_BASE_URL}/employees/${employeeId}/vacation-balance`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ balance })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  
+
+  
+
   // Employees endpoints  
   async getEmployees(token?: string) {
     try {
