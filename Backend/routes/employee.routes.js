@@ -9,5 +9,8 @@ router.get('/:id', auth, employeeCtrl.getEmployeeById);
 router.put('/:id', auth, employeeCtrl.updateEmployee);
 router.delete('/:id', auth, employeeCtrl.deleteEmployee);
 
+// Vacaciones (saldo)
+router.patch('/:id/vacation-balance', auth, employeeCtrl.updateVacationBalance);
+
 
 module.exports = router;

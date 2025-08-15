@@ -23,15 +23,15 @@ export function BarChart({
 
   return (
     <div className="w-full overflow-y-hidden" style={{ height }}>
-      {/* Contenedor scrollable para evitar desbordes horizontales */}
-      <div className="h-full overflow-x-auto overflow-y-hidden">
-        <div className="flex items-end h-full space-x-2 min-w-max px-1">
+      {/* Contenedor ajustado: ocupa todo el ancho y reparte barras */}
+      <div className="h-full overflow-x-hidden overflow-y-hidden">
+        <div className="flex items-end h-full gap-2 w-full px-1">
           {data.map((point, index) => {
             const heightPercentage = (point.value / maxValue) * 100;
             return (
               <div
                 key={index}
-                className="min-w-[48px] flex flex-col items-center h-full group"
+                className="flex-1 min-w-[28px] flex flex-col items-center h-full group"
               >
                 {/* Wrapper con altura fija para que el % funcione */}
                 <div className="flex-1 w-full flex items-end">

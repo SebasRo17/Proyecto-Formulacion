@@ -12,6 +12,7 @@ type DashboardStats = {
   departmentCosts: { [key: string]: number }; 
   activeInsights: number;
   netPayrolls: NetPayroll[];
+  insightSeverity?: { [key: string]: number };
 };
 
 //  Define el estado completo con loading y error
@@ -48,18 +49,20 @@ const { token } = useAuth();
       try {
   const token = localStorage.getItem('paysmart_token');
 
-      const [statsRes, insightsRes, netRes] = await Promise.all([
+      const [statsRes, insightsRes, netRes, sevRes] = await Promise.all([
         axios.get<DashboardStats>(`${API_BASE_URL}/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get<{ success: boolean; count: number }>(`${API_BASE_URL}/dashboard/active-insights-count`),
-        axios.get<{ success: boolean; data: NetPayroll[] }>(`${API_BASE_URL}/dashboard/net-payrolls`) // <-- nuevo
+        axios.get<{ success: boolean; data: NetPayroll[] }>(`${API_BASE_URL}/dashboard/net-payrolls`),
+        axios.get<{ success: boolean; data: Record<string, number> }>(`${API_BASE_URL}/dashboard/insights/severity-stats`)
       ]);
 
         setDashboardData({
           ...statsRes.data,
           activeInsights: insightsRes.data.count,
           netPayrolls: netRes.data.data,
+          insightSeverity: sevRes.data.data || {},
           loading: false,
           error: null
         });

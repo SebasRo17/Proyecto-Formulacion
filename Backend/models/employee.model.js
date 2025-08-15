@@ -11,7 +11,10 @@ const employeeSchema = new mongoose.Schema({
   cedula: { type: String, required: true },
   phone: String,
   address: String,
-  avatar: String
+  avatar: String,
+  // Saldos de vacaciones (modo académico)
+  vacationBalance: { type: Number, default: 0 },
+  vacationUpdatedAt: { type: Date }
 }, {
   timestamps: true
 });

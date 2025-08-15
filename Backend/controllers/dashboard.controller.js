@@ -72,8 +72,17 @@ exports.getPayrollTrends = async (req, res) => {
 
 exports.getActiveInsightsCount = async (req, res) => {
   try {
-    const activeCount = await AIInsight.countDocuments({ severity: 'high'});
-
+    // Cuenta "visibles": severidad media/alta/crítica y confianza >= 0.6 (críticos sin umbral),
+    // excluyendo estados descartados o resueltos.
+    const filter = {
+      status: { $nin: ['dismissed', 'resolved'] },
+      severity: { $in: ['medium', 'high', 'critical'] },
+      $or: [
+        { severity: 'critical' },
+        { confidence: { $gte: 0.6 } }
+      ]
+    };
+    const activeCount = await AIInsight.countDocuments(filter);
     res.json({ success: true, count: activeCount });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -91,6 +100,24 @@ exports.getNetPayrolls = async (req, res) => {
     }));
 
     res.json({ success: true, data: netData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Retorna conteo de insights por severidad visibles (para gráfica)
+exports.getInsightSeverityStats = async (req, res) => {
+  try {
+    const match = {
+      status: { $nin: ['dismissed', 'resolved'] },
+      severity: { $in: ['low','medium','high','critical'] },
+    };
+    const data = await AIInsight.aggregate([
+      { $match: match },
+      { $group: { _id: '$severity', count: { $sum: 1 } } },
+    ]);
+    const map = data.reduce((acc, d) => { acc[d._id] = d.count; return acc; }, {});
+    res.json({ success: true, data: map });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
